@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Friendly Fire, Truco, Paciência & Batalha Naval Hub</title>
+
+    <!-- SCRIPT DE TESTE GOOGLE ADS / PUBLISHER TAG (BANNER FULL WIDTH) -->
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+    <script>
+      window.googletag = window.googletag || {cmd: []};
+      googletag.cmd.push(function() {
+        googletag.defineSlot('/6355419/Travel/Europe', [[320, 50], [360, 50], [400, 50]], 'google-ad-banner-bar')
+                 .addService(googletag.pubads());
+        googletag.pubads().enableSingleRequest();
+        googletag.enableServices();
+      });
+    </script>
+
+    <style>
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            position: fixed;
+            background-color: #0b0f19;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- SPLASH SCREEN EM TELA INTEIRA --- */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100dvh;
+            background-color: #0b0f19;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 99999;
+            opacity: 1; transition: opacity 0.8s ease-out;
+            cursor: pointer;
+        }
+
+        #splash-logo {
+            width: 100vw;
+            height: 100dvh;
+            object-fit: cover;
+            animation: fadeInLogo 1.2s ease-in-out;
+        }
+
+        @keyframes fadeInLogo {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* CONTAINER PRINCIPAL */
+        #app-wrapper {
+            width: 100vw; height: calc(100dvh - 50px);
+            max-width: 500px; max-height: 870px;
+            background-color: #0f172a;
+            position: relative;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 35px rgba(0,0,0,0.9);
+            margin-bottom: 50px;
+        }
+
+        @media (min-width: 520px) {
+            #app-wrapper {
+                height: calc(96dvh - 50px);
+                border-radius: 20px;
+                border: 2px solid #334155;
+            }
+        }
+
+        /* BARRA SUPERIOR */
+        .top-menu-bar {
+            width: 100%; height: 42px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px;
+            background: rgba(0, 0, 0, 0.85);
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            z-index: 1000; flex-shrink: 0;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 4px 10px; border-radius: 12px;
+            font-size: 12px; font-weight: bold;
+            display: flex; align-items: center; gap: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .status-pill {
+            padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: bold; text-transform: uppercase;
+        }
+        .status-novato { background: #3b82f6; color: #fff; }
+        .status-apto { background: #10b981; color: #fff; }
+
+        /* HUB */
+        #hub-screen {
+            width: 100%; height: calc(100% - 42px);
+            padding: 12px;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-y: auto;
+        }
+
+        .training-card {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            width: 100%; padding: 14px; border-radius: 16px;
+            border: 1px solid #6366f1; margin-bottom: 12px; text-align: left;
+        }
+
+        .training-title {
+            font-size: 0.95rem; font-weight: bold; color: #a5b4fc;
+            display: flex; justify-content: space-between;
+        }
+
+        .progress-bar-container {
+            background: #0f172a; height: 10px; border-radius: 6px;
+            overflow: hidden; margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            background: #818cf8; height: 100%; width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .mission-details { font-size: 0.75rem; color: #c7d2fe; }
+
+        .games-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; width: 100%; margin-top: 8px;
+        }
+
+        .game-card {
+            background-color: #1e293b;
+            border-radius: 16px; padding: 12px 10px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; border: 1px solid #334155; position: relative;
+        }
+
+        .game-icon-container {
+            position: relative; font-size: 2.2rem; margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .game-icon-bg { opacity: 0.3; transition: opacity 0.3s ease; }
+        .game-card.unlocked .game-icon-bg { opacity: 1; }
+        .lock-overlay { position: absolute; font-size: 1.4rem; z-index: 2; }
+        .game-card.unlocked .lock-overlay { display: none; }
+
+        .game-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
+        .game-desc { font-size: 0.68rem; color: #94a3b8; margin-bottom: 10px; min-height: 28px; }
+
+        .btn-hub {
+            padding: 8px 12px; font-size: 13px; cursor: pointer;
+            border-radius: 8px; border: none;
+            background-color: #27ae60; color: white; font-weight: bold; width: 100%;
+        }
+
+        .btn-unlock { background-color: #f39c12; color: #000; }
+        .btn-ad { background-color: #8e44ad; width: 100%; margin-bottom: 12px; }
+
+        /* BARRA INFERIOR DE ANÚNCIOS GOOGLE */
+        #google-ad-banner-bar {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 50px !important;
+            max-height: 50px !important;
+            min-height: 50px !important;
+            background: #020617;
+            border-top: 1px solid #1e293b;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #64748b;
+            z-index: 99999 !important;
+            letter-spacing: 0.5px;
+            overflow: hidden !important;
+        }
+
+        #google-ad-banner-bar div, 
+        #google-ad-banner-bar iframe {
+            max-height: 50px !important;
+            overflow: hidden !important;
+        }
+
+        /* SETUP SCREENS */
+        #setup-screen, #truco-setup-screen, #paciencia-setup-screen, #naval-setup-screen {
+            width: 100%; height: calc(100% - 42px);
+            padding: 10px 8px; display: none;
+            flex-direction: column; justify-content: space-between; align-items: center;
+        }
+
+        .player-count-selector {
+            margin: 8px 0; display: flex; gap: 8px;
+            align-items: center; justify-content: center;
+        }
+
+        .btn-count {
+            padding: 8px 16px; font-size: 15px; background-color: #27ae60;
+            border-radius: 10px; border: 2px solid transparent; color: white;
+            font-weight: bold; cursor: pointer;
+        }
+        .btn-count.active { background-color: #f39c12; border-color: white; }
+
+        #players-list, #truco-players-list {
+            width: 100%; max-width: 340px; max-height: 32vh;
+            overflow-y: auto; margin: 5px 0;
+        }
+
+        .player-config { 
+            margin: 6px 0; font-size: 15px; display: flex;
+            justify-content: space-between; align-items: center;
+            width: 100%; padding: 0 10px;
+        }
+
+        button {
+            padding: 8px 16px; font-size: 15px; cursor: pointer;
+            border-radius: 10px; border: none; background-color: #27ae60;
+            color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        button:active { transform: scale(0.92); }
+
+        /* MESAS DE JOGO */
+        #game-screen, #truco-screen, #paciencia-screen, #naval-screen {
+            width: 100%; height: calc(100% - 42px);
+            display: none; flex-direction: column;
+            justify-content: space-between; align-items: center;
+            padding: 0; position: relative;
+        }
+
+        #game-screen {
+            background-color: #120a07;
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #truco-screen {
+            background-color: #1e5631;
+            background-image: url("TRUCO/ASSETS/image_backstage_truco1.png"), radial-gradient(#27ae60 15%, transparent 16%), radial-gradient(#1e5631 15%, transparent 16%);
+            background-size: cover, 40px 40px, 40px 40px; background-position: center;
+        }
+
+        #paciencia-screen {
+            background-color: #0f5257;
+            background-image: radial-gradient(#0b3c40 15%, transparent 16%);
+            background-size: 30px 30px;
+        }
+
+        #naval-screen {
+            background-color: #0c1e38;
+            background-image: radial-gradient(#1e3a8a 15%, transparent 16%);
+            background-size: 25px 25px;
+        }
+
+        #header-area {
+            width: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            margin: 0; z-index: 100;
+        }
+
+        /* BARRA DE JOGO ÚNICA E INTEGRADA (FRIENDLY FIRE) */
+        .game-single-top-bar {
+            width: 100%; height: 42px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px;
+            background: rgba(0, 0, 0, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 12px; font-weight: bold;
+        }
+
+        .coin-icon-img {
+            width: 16px; height: 16px;
+            object-fit: contain;
+            vertical-align: middle;
+        }
+
+        .btn-quit-compact {
+            background-color: #e74c3c;
+            color: white; border: none;
+            padding: 4px 10px; border-radius: 8px;
+            font-size: 14px; font-weight: bold;
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            cursor: pointer;
+        }
+
+        .game-top-hud {
+            display: flex; justify-content: space-between;
+            width: 100%; padding: 0 8px; margin-bottom: 2px;
+            font-size: 13px; font-weight: bold;
+        }
+
+        .turn-timer-bar-container {
+            width: 100%; height: 5px; background: rgba(0, 0, 0, 0.4);
+            border-radius: 0; overflow: hidden; margin-top: 0;
+        }
+
+        .turn-timer-bar-fill {
+            height: 100%; width: 100%; background: #f39c12;
+            transition: width 0.1s linear, background-color 0.3s ease;
+        }
+
+        #status-msg { margin: 4px 0 2px 0; font-size: 12px; text-align: center; width: 100%; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+
+        /* BOTÃO VER CARTAS BEM LÁ EMBAIXO (ACIMA DO BANNER FIXO) */
+        #privacy-area {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        .btn-reveal { 
+            background-color: #f39c12; font-size: 11px; padding: 6px 16px; 
+            border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            cursor: pointer; text-align: center; border: 1px solid #fff;
+            color: black; font-weight: bold;
+        }
+
+        .btn-quit { background-color: #e74c3c; font-size: 11px; padding: 3px 8px; border-radius: 6px; }
+
+        .table {
+            position: relative; width: 100%; flex-grow: 1;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .p-center { 
+            position: absolute; top: 46%; left: 50%;
+            transform: translate(-50%, -50%); z-index: 10;
+        }
+
+        .player-slot {
+            position: absolute; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            width: 110px; height: 75px;
+        }
+
+        /* --- POSICIONAMENTO E ORIENTAÇÃO DAS MESAS FRIENDLY FIRE --- */
+        #table-grid .pos-2-bottom { bottom: 18% !important; left: 50%; transform: translateX(-50%); }
+        #table-grid .pos-2-top { top: 18% !important; left: 50%; transform: translateX(-50%); }
+        
+        #table-grid .pos-3-left { top: 46%; left: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-3-left .hand { transform: rotate(90deg) !important; }
+
+        #table-grid .pos-4-right { top: 46%; right: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-4-right .hand { transform: rotate(-90deg) !important; }
+
+        #table-grid .pos-norte { top: 10% !important; left: 50%; transform: translateX(-50%); }
+        #table-grid .pos-sul { bottom: 12% !important; left: 50%; transform: translateX(-50%); }
+
+        #table-grid .pos-top-left { top: 26% !important; left: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-top-left .hand { transform: rotate(90deg) !important; }
+
+        #table-grid .pos-bottom-left { top: 58% !important; left: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-bottom-left .hand { transform: rotate(90deg) !important; }
+
+        #table-grid .pos-top-right { top: 26% !important; right: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-top-right .hand { transform: rotate(-90deg) !important; }
+
+        #table-grid .pos-bottom-right { top: 58% !important; right: 48px !important; transform: translateY(-50%); }
+        #table-grid .pos-bottom-right .hand { transform: rotate(-90deg) !important; }
+
+        /* TRUCO POSICIONAMENTO */
+        #truco-table-grid .p-truco-top { top: 8px; left: 50%; transform: translateX(-50%); }
+        #truco-table-grid .p-truco-bottom { bottom: 15px !important; left: 50%; transform: translateX(-50%); }
+        #truco-table-grid .p-truco-left { top: 50%; left: 40px; transform: translateY(-50%); }
+        #truco-table-grid .p-truco-left .hand { transform: rotate(90deg) !important; }
+        #truco-table-grid .p-truco-right { top: 50%; right: 40px; transform: translateY(-50%); }
+        #truco-table-grid .p-truco-right .hand { transform: rotate(-90deg) !important; }
+
+        .hand {
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; padding: 0;
+            border: none !important; background: transparent !important;
+            overflow: visible !important; transition: opacity 0.2s ease;
+        }
+
+        .hand.cards-picked { opacity: 0.15 !important; }
+
+        .player-label {
+            font-weight: bold; font-size: 10px; margin-bottom: 2px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8); white-space: nowrap;
+            padding: 2px 6px; border-radius: 6px; transition: all 0.3s ease;
+            background: rgba(0,0,0,0.6);
+        }
+
+        .player-label.turn-active {
+            color: #000; background-color: #f1c40f;
+            box-shadow: 0 0 10px #f1c40f; font-weight: 900; transform: scale(1.1);
+        }
+
+        .player-label.uno-alert { animation: pulseUno 0.6s infinite alternate; }
+
+        @keyframes pulseUno {
+            from { background-color: #e74c3c; color: white; transform: scale(1.1); }
+            to { background-color: #f1c40f; color: black; transform: scale(1.25); box-shadow: 0 0 15px #e74c3c; }
+        }
+
+        /* CARTAS FRIENDLY FIRE */
+        .card {
+            width: 38px; height: 56px; border-radius: 5px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 900; color: white;
+            border: 1px solid white; box-shadow: -1px 2px 4px rgba(0,0,0,0.3);
+            position: relative; flex-shrink: 0; transition: margin 0.2s ease;
+        }
+
+        .card.red { background-color: #e74c3c; }
+        .card.blue { background-color: #3498db; }
+        .card.green { background-color: #2ecc71; }
+        .card.yellow { background-color: #f1c40f; color: black; }
+        .card.black { background-color: #2c3e50; }
+
+        .card.back { 
+            background-color: #34495e;
+            background-image: url("FRIENDLY FIRE/ASSETS/image_2.png");
+            background-size: cover; background-position: center;
+            color: transparent; border: 1px solid #5d6d7e;
+        }
+
+        #deck.card.back {
+            box-shadow: -2px 2px 0px #ffffff, -4px 4px 0px #ffffff, -5px 5px 4px rgba(0,0,0,0.4);
+        }
+
+        .hand-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #f1c40f; border-radius: 8px;
+            padding: 8px 6px; font-size: 12px; font-weight: bold;
+            cursor: pointer; box-shadow: none; flex-shrink: 0;
+        }
+        .hand-nav-btn:active { transform: scale(0.9); }
+
+        /* CARTAS TRUCO */
+        .truco-card {
+            width: 40px !important; height: 60px !important;
+            font-size: 13px !important; border-radius: 5px !important;
+            background-color: #ffffff !important; box-shadow: -2px 3px 6px rgba(0,0,0,0.5);
+            border: 1px solid #bbb !important; display: inline-flex;
+            align-items: center; justify-content: center; font-weight: bold;
+        }
+
+        .truco-card.suit-black { color: #000000 !important; background-color: #ffffff !important; }
+        .truco-card.suit-red { color: #e74c3c !important; background-color: #ffffff !important; }
+
+        .truco-card.truco-back {
+            background-color: #1e3a8a !important;
+            background-image: url("TRUCO/ASSETS/image_3.png") !important;
+            background-size: cover; background-position: center;
+            color: transparent !important; border: 1px solid #3b82f6 !important;
+        }
+
+        .deck-vira-container {
+            position: relative; display: flex;
+            align-items: center; justify-content: center;
+            width: 70px; height: 70px;
+        }
+
+        .card-deck { position: absolute; z-index: 2; }
+        .card-vira {
+            position: absolute; z-index: 1;
+            transform: rotate(25deg) translate(-12px, -5px);
+            box-shadow: -1px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .flying-card {
+            position: fixed; z-index: 9999; pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .truco-drop-grid {
+            display: grid; grid-template-columns: repeat(2, 44px);
+            grid-template-rows: repeat(2, 64px); gap: 6px;
+            align-items: center; justify-content: center;
+        }
+
+        .truco-drop-slot {
+            width: 42px; height: 62px; border: none !important;
+            background: transparent !important; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .manilhas-bar {
+            display: flex; align-items: center; gap: 3px;
+            background: rgba(0,0,0,0.5); padding: 2px 6px;
+            border-radius: 6px; border: 1px solid #f1c40f;
+        }
+
+        .mini-card {
+            width: 18px; height: 25px; background: white;
+            color: black; border-radius: 2px; font-size: 9px;
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+        }
+
+        .truco-round-indicators { display: flex; gap: 4px; margin-top: 2px; }
+        .round-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+        }
+        .round-dot.win-nos { background: #2ecc71; border-color: #fff; box-shadow: 0 0 5px #2ecc71; }
+        .round-dot.win-eles { background: #e74c3c; border-color: #fff; box-shadow: 0 0 5px #e74c3c; }
+
+        #card-action-modal {
+            display: none; position: absolute; bottom: 90px;
+            left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
+            border-radius: 14px; padding: 10px; z-index: 1200;
+            flex-direction: column; gap: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+        }
+
+        #card-action-modal button { font-size: 12px; padding: 6px 12px; }
+
+        #color-picker {
+            display: none; margin: 5px auto; padding: 10px;
+            background: rgba(0,0,0,0.95); border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6); z-index: 900;
+            width: 90%; position: absolute; top: 40%; left: 5%;
+        }
+
+        #color-picker button { padding: 8px 12px; font-size: 13px; margin: 3px; }
+
+        .truco-controls-left {
+            position: absolute; bottom: max(12px, env(safe-area-inset-bottom));
+            left: 10px; z-index: 1000;
+        }
+
+        .btn-truco-action {
+            background-color: #e67e22; color: white;
+            font-size: 11px; padding: 6px 10px; border-radius: 10px;
+            font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        #truco-challenge-modal {
+            display: none; position: absolute; top: 40%; left: 50%;
+            transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.98);
+            border: 2px solid #f1c40f; border-radius: 16px; padding: 14px;
+            z-index: 1500; width: 85%; max-width: 300px;
+            flex-direction: column; align-items: center; gap: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9);
+        }
+
+        .challenge-timer-bar {
+            width: 100%; height: 4px; background: rgba(255,255,255,0.2);
+            border-radius: 2px; overflow: hidden;
+        }
+
+        .challenge-timer-fill {
+            height: 100%; width: 100%; background: #e74c3c;
+            transition: width 0.1s linear;
+        }
+
+        /* PACIÊNCIA */
+        .paciencia-board {
+            display: flex; flex-direction: column;
+            width: 100%; height: 100%; gap: 6px; padding-top: 2px;
+        }
+
+        .paciencia-top-row {
+            display: flex; justify-content: space-between;
+            width: 100%; padding: 0 2px;
+        }
+
+        .paciencia-foundations, .paciencia-stock-area { display: flex; gap: 3px; }
+
+        .paciencia-slot {
+            width: 38px; height: 54px;
+            border: 1px dashed rgba(255,255,255,0.3); border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; position: relative;
+            background: rgba(0,0,0,0.2); cursor: pointer;
+        }
+
+        .paciencia-columns {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 2px; width: 100%; flex-grow: 1; padding: 0 2px;
+        }
+
+        .paciencia-col {
+            display: flex; flex-direction: column;
+            align-items: center; position: relative;
+            min-height: 260px; cursor: pointer;
+        }
+
+        .pac-card {
+            width: 38px !important; height: 54px !important;
+            border-radius: 4px !important; position: absolute !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            background-color: white !important; display: flex !important;
+            flex-direction: column !important; justify-content: space-between !important;
+            padding: 2px !important; cursor: pointer;
+        }
+
+        .pac-card.pac-card-back {
+            background-color: #1e3a8a !important;
+            background-image: linear-gradient(135deg, #1e3a8a 25%, #3b82f6 100%) !important;
+            border: 1px solid #60a5fa !important;
+        }
+
+        .pac-card.selected {
+            border: 2px solid #f1c40f !important;
+            box-shadow: 0 0 10px #f1c40f !important;
+        }
+
+        .pac-card.suit-black { color: black !important; }
+        .pac-card.suit-red { color: #e74c3c !important; }
+
+        .pac-card-header {
+            font-size: 9px; font-weight: bold;
+            display: flex; justify-content: flex-end; line-height: 1;
+        }
+
+        .pac-card-center {
+            font-size: 14px; display: flex;
+            align-items: center; justify-content: center; flex-grow: 1;
+        }
+
+        .btn-autocomplete {
+            display: none; position: absolute;
+            bottom: max(14px, env(safe-area-inset-bottom)); right: 14px;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            color: #000; font-weight: 900; padding: 6px 12px;
+            border-radius: 10px; z-index: 1200; box-shadow: 0 0 12px #f1c40f;
+            font-size: 12px;
+        }
+
+        /* BATALHA NAVAL STYLES */
+        .naval-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            gap: 2px; width: 100%; max-width: 320px;
+            background: rgba(0,0,0,0.4); padding: 4px; border-radius: 8px;
+            border: 1px solid #1e3a8a;
+        }
+
+        .naval-cell {
+            aspect-ratio: 1; background: #1e293b;
+            border: 1px solid #334155; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer;
+        }
+        .naval-cell.hit { background: #ef4444; color: white; }
+        .naval-cell.miss { background: #0284c7; color: white; }
+        .naval-cell.ship { background: #475569; }
+
+        /* --- ANÚNCIOS NATIVOS COM CURVATURA BEM ACENTUADA (SVG) E LATERAIS PADRONIZADAS --- */
+        
+        .ff-native-sponsor-north {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent !important;
+            border: none !important;
+            z-index: 80;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .ff-native-sponsor-north:active { opacity: 0.6; }
+
+        .ff-native-sponsor-south {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent !important;
+            border: none !important;
+            z-index: 80;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .ff-native-sponsor-south:active { opacity: 0.6; }
+
+        /* LATERAIS UNIFICADAS COM A MESMA FONTE, SEM CAIXINHA/BRILHO E EMBOSS NO FELTRO */
+        .ff-native-sponsor-left {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%) rotate(90deg);
+            transform-origin: center center;
+            background: transparent !important;
+            border: none !important;
+            padding: 0;
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: 9px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            z-index: 80;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            white-space: nowrap;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+        .ff-native-sponsor-left:active { opacity: 0.6; }
+
+        .ff-native-sponsor-right {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: center center;
+            background: transparent !important;
+            border: none !important;
+            padding: 0;
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: 9px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            z-index: 80;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            white-space: nowrap;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+        .ff-native-sponsor-right:active { opacity: 0.6; }
+
+        /* TRUCO SPONSORS */
+        .truco-sponsor-top {
+            position: absolute;
+            top: 38%; left: 50%;
+            transform: translate(-50%, -50%) rotate(180deg);
+            background: transparent;
+            font-size: 9px; color: rgba(255,255,255,0.7); pointer-events: none; z-index: 50;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .truco-sponsor-bottom {
+            position: absolute;
+            bottom: 38%; left: 50%;
+            transform: translate(-50%, 50%);
+            background: transparent;
+            font-size: 9px; color: rgba(255,255,255,0.7); pointer-events: none; z-index: 50;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .paciencia-sponsor-bottomleft {
+            position: absolute;
+            bottom: max(10px, env(safe-area-inset-bottom)); left: 8px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid #38bdf8; border-radius: 8px;
+            padding: 4px 8px; font-size: 8px; color: #38bdf8;
+            pointer-events: none; z-index: 100;
+        }
+
+        .dev-panel {
+            background: #111827; border-top: 2px dashed #f59e0b;
+            padding: 4px 8px; width: 100%; position: absolute;
+            bottom: 0px; left: 0; z-index: 2000; display: block;
+        }
+        .dev-title { font-size: 0.65rem; color: #f59e0b; font-weight: bold; margin-bottom: 2px; }
+        .dev-buttons { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+        .btn-dev {
+            background: #374151; color: #fff; border: 1px solid #4b5563;
+            padding: 2px 6px; font-size: 0.65rem; border-radius: 4px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH SCREEN EM TELA INTEIRA -->
+    <div id="splash-screen" onclick="closeSplashScreen()">
+        <img src="logo_game_dev.png" alt="Logo Game Dev" id="splash-logo" onerror="this.style.display='none'; closeSplashScreen();">
+    </div>
+
+    <div id="app-wrapper">
+        <!-- BARRA SUPERIOR (HUB E SETUPS) -->
+        <div class="top-menu-bar" id="global-top-bar">
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn-settings" style="background:transparent; border:none; color:white; font-size:14px;" title="Config">⚙️</button>
+                <div class="stat-badge">⚡ <span id="energy-display">10/10</span></div>
+            </div>
+            <div class="stat-badge"><img src="coin_icon.png" alt="Moeda" class="coin-icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span></span> <span id="coins-display">100</span></div>
+            <div class="status-pill status-novato" id="status-pill">NOVATO</div>
+        </div>
+
+        <!-- HUB -->
+        <div id="hub-screen">
+            <div class="training-card" id="training-card">
+                <div class="training-title">
+                    <span>🎓 Período de Treinamento</span>
+                    <span id="training-days-text">Dia 1 / 7</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="training-progress-fill"></div>
+                </div>
+                <div class="mission-details" id="mission-text">
+                    Meta de hoje: Jogue 2 partidas e assista a 1 vídeo para avançar o dia de treino!
+                </div>
+            </div>
+
+            <div class="training-card" id="apto-card" style="display: none; background: linear-gradient(135deg, #064e3b, #047857); border-color: #10b981;">
+                <div class="training-title" style="color: #a7f3d0;">
+                    <span>🏅 Jogador Apto / Veterano</span>
+                </div>
+                <p style="font-size: 0.8rem; color: #ecfdf5; margin-top: 4px;">
+                    Treino concluído! Tanque padrão de <strong>3 energias</strong> (24h por recarga). Vitórias pagam o prêmio máximo (+50 lucro)!
+                </p>
+            </div>
+
+            <button type="button" class="btn-hub btn-ad" onclick="watchAdForEnergy()">📺 Assistir Vídeo (+1 ⚡ & +40 🟡)</button>
+
+            <h3 style="align-self: flex-start; margin: 4px 0;">Hub de Jogos</h3>
+
+            <div class="games-grid">
+                <div class="game-card unlocked">
+                    <div class="game-icon-container">
+                        <span class="game-icon-bg">🔥</span>
+                    </div>
+                    <div class="game-name">Friendly Fire</div>
+                    <div class="game-desc">O clássico jogo de cartas e descarte local.</div>
+                    <button class="btn-hub" onclick="openSetupScreen()">Entrar na Mesa</button>
+                </div>
+
+                <div class="game-card" id="card-truco">
+                    <div class="game-icon-container">
+                        <span class="game-icon-bg">🃏</span>
+                        <span class="lock-overlay" id="lock-truco">🔒</span>
+                    </div>
+                    <div class="game-name">Truco</div>
+                    <div class="game-desc">Universal. Blefes, quedas e manilhas!</div>
+                    <button class="btn-hub btn-unlock" id="btn-truco" onclick="openTrucoSetup()">Desbloquear (🟡 4.000)</button>
+                </div>
+
+                <div class="game-card" id="card-paciencia">
+                    <div class="game-icon-container">
+                        <span class="game-icon-bg">🧩</span>
+                        <span class="lock-overlay" id="lock-paciencia">🔒</span>
+                    </div>
+                    <div class="game-name">Paciência</div>
+                    <div class="game-desc">Modo Solo para relaxar.</div>
+                    <button class="btn-hub btn-unlock" id="btn-paciencia" onclick="openPacienciaSetup()">Desbloquear (🟡 1.000)</button>
+                </div>
+
+                <div class="game-card" id="card-naval">
+                    <div class="game-icon-container">
+                        <span class="game-icon-bg">⚓</span>
+                        <span class="lock-overlay" id="lock-naval">🔒</span>
+                    </div>
+                    <div class="game-name">Batalha Naval</div>
+                    <div class="game-desc">Combate tático marítimo contra a CPU.</div>
+                    <button class="btn-hub btn-unlock" id="btn-naval" onclick="openNavalSetup()">Desbloquear (🟡 2.000)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETUP FRIENDLY FIRE -->
+        <div id="setup-screen">
+            <div style="margin: auto; width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <h1 style="font-size: 22px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 4px;">Friendly Fire</h1>
+                
+                <p style="margin: 4px 0; font-size: 13px;">Nº de Jogadores na Mesa:</p>
+                <div class="player-count-selector">
+                    <button type="button" class="btn-count" id="cnt-2" onclick="setPlayerCount(2)">2</button>
+                    <button type="button" class="btn-count" id="cnt-3" onclick="setPlayerCount(3)">3</button>
+                    <button type="button" class="btn-count" id="cnt-4" onclick="setPlayerCount(4)">4</button>
+                    <button type="button" class="btn-count" id="cnt-5" onclick="setPlayerCount(5)">5</button>
+                    <button type="button" class="btn-count active" id="cnt-6" onclick="setPlayerCount(6)">6</button>
+                </div>
+
+                <div id="players-list"></div>
+                <br>
+                <button type="button" onclick="tryStartGame()" style="font-size: 15px; background-color: #e67e22; padding: 8px 24px; width: 85%;">Iniciar Jogo (🟡 10)</button>
+                <br>
+                <button type="button" class="btn-back-hub" onclick="showHub()" style="background: transparent; border: 1px solid #94a3b8; font-size: 12px;">Voltar ao Hub</button>
+            </div>
+        </div>
+
+        <!-- SETUP TRUCO -->
+        <div id="truco-setup-screen">
+            <div style="margin: auto; width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <h1 style="font-size: 22px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 2px;">Truco Universal</h1>
+                <p style="font-size: 11px; color: #f1c40f; margin-bottom: 6px;">Manilhas dinâmicas determinadas pelo Vira do Baralho</p>
+
+                <p style="margin: 4px 0; font-size: 13px;">Modalidade da Mesa:</p>
+                <div class="player-count-selector">
+                    <button type="button" class="btn-count active" id="truco-cnt-2" onclick="setTrucoPlayerCount(2)">1 vs 1</button>
+                    <button type="button" class="btn-count" id="truco-cnt-4" onclick="setTrucoPlayerCount(4)">2 vs 2 (Duplas)</button>
+                </div>
+
+                <div id="truco-players-list"></div>
+                <br>
+                <button type="button" onclick="startTrucoGame()" style="font-size: 15px; background-color: #e67e22; padding: 8px 24px; width: 85%;">Iniciar Truco</button>
+                <br>
+                <button type="button" class="btn-back-hub" onclick="showHub()" style="background: transparent; border: 1px solid #94a3b8; font-size: 12px;">Voltar ao Hub</button>
+            </div>
+        </div>
+
+        <!-- SETUP PACIÊNCIA -->
+        <div id="paciencia-setup-screen">
+            <div style="margin: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <h1 style="font-size: 22px;">Solitário Paciência</h1>
+                <p style="font-size: 13px; color: #94a3b8;">Escolha a regra de distribuição do Baralho:</p>
+                
+                <div style="display: flex; gap: 10px; width: 85%;">
+                    <button type="button" class="btn-count active" id="pac-mode-1" onclick="setPacMode(1)" style="flex:1;">Virar 1 Carta</button>
+                    <button type="button" class="btn-count" id="pac-mode-3" onclick="setPacMode(3)" style="flex:1;">Virar 3 Cartas</button>
+                </div>
+
+                <br>
+                <button type="button" onclick="startPacienciaGameFinal()" style="font-size: 15px; background-color: #e67e22; padding: 10px 24px; width: 85%;">Iniciar Paciência</button>
+                <button type="button" class="btn-back-hub" onclick="showHub()" style="background: transparent; border: 1px solid #94a3b8; font-size: 12px;">Voltar ao Hub</button>
+            </div>
+        </div>
+
+        <!-- SETUP BATALHA NAVAL -->
+        <div id="naval-setup-screen">
+            <div style="margin: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <h1 style="font-size: 22px;">Batalha Naval ⚓</h1>
+                <p style="font-size: 13px; color: #38bdf8;">Afunde a frota inimiga antes que afundem a sua!</p>
+                <br>
+                <button type="button" onclick="startNavalGame()" style="font-size: 15px; background-color: #0284c7; padding: 10px 24px; width: 85%;">Iniciar Batalha</button>
+                <button type="button" class="btn-back-hub" onclick="showHub()" style="background: transparent; border: 1px solid #94a3b8; font-size: 12px;">Voltar ao Hub</button>
+            </div>
+        </div>
+
+        <!-- MESA FRIENDLY FIRE -->
+        <div id="game-screen">
+            <!-- BARRA ÚNICA SUPERIOR DO FRIENDLY FIRE -->
+            <div class="game-single-top-bar" id="game-top-bar">
+                <div class="status-pill status-novato" id="ff-top-status">NOVATO</div>
+                <div class="stat-badge" style="margin:0;">
+                    <img src="coin_icon.png" alt="Moeda" class="coin-icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                    <span style="display:none;">🟡</span>
+                    <span id="ff-top-coins">100</span>
+                </div>
+                <span id="match-timer">⏱️ 00:00</span>
+                <button class="btn-quit-compact" onclick="quitMatch()" title="Sair da partida">🚪</button>
+            </div>
+
+            <!-- ANÚNCIOS NATIVOS COM CURVATURA BEM ACENTUADA (SVG) -->
+            <div class="ff-native-sponsor-north" onclick="alert('Redirecionando para o patrocinador de teste...')">
+                <svg width="240" height="50" style="overflow:visible;">
+                    <path id="curve-north" d="M 5,45 Q 120, -18 235,45" fill="transparent"/>
+                    <text font-family="Georgia, serif" font-size="9" font-weight="900" fill="rgba(255,255,255,0.85)" letter-spacing="2">
+                        <textPath href="#curve-north" startOffset="50%" text-anchor="middle">AD • CASINO ROYALE SPONSOR • AD</textPath>
+                    </text>
+                </svg>
+            </div>
+
+            <div class="ff-native-sponsor-south" onclick="alert('Redirecionando para o patrocinador de teste...')">
+                <svg width="240" height="50" style="overflow:visible;">
+                    <path id="curve-south" d="M 5,-5 Q 120, 58 235,-5" fill="transparent"/>
+                    <text font-family="Georgia, serif" font-size="9" font-weight="900" fill="rgba(255,255,255,0.85)" letter-spacing="2">
+                        <textPath href="#curve-south" startOffset="50%" text-anchor="middle">AD • CASINO ROYALE SPONSOR • AD</textPath>
+                    </text>
+                </svg>
+            </div>
+
+            <div class="ff-native-sponsor-left" onclick="alert('Redirecionando para o patrocinador de teste...')">
+                AD • CASINO ROYALE SPONSOR • AD
+            </div>
+
+            <div class="ff-native-sponsor-right" onclick="alert('Redirecionando para o patrocinador de teste...')">
+                AD • CASINO ROYALE SPONSOR • AD
+            </div>
+
+            <div id="header-area">
+                <div class="turn-timer-bar-container">
+                    <div class="turn-timer-bar-fill" id="turn-timer-bar"></div>
+                </div>
+                <h3 id="status-msg">Vez do Jogador 1</h3>
+            </div>
+
+            <!-- BOTÃO VER CARTAS POSICIONADO BEM EMBAIXO (ACIMA DO BANNER FIXO) -->
+            <div id="privacy-area">
+                <button class="btn-reveal" id="btn-reveal" onclick="toggleFloatingHand()">👁️ Ver Cartas</button>
+            </div>
+
+            <div id="color-picker">
+                <p style="margin: 2px 0 6px 0; font-size: 14px;">Escolha a cor:</p>
+                <button style="background:#e74c3c" onclick="chooseColor('red')">Vermelho</button>
+                <button style="background:#3498db" onclick="chooseColor('blue')">Azul</button>
+                <button style="background:#2ecc71" onclick="chooseColor('green')">Verde</button>
+                <button style="background:#f1c40f; color:black" onclick="chooseColor('yellow')">Amarelo</button>
+            </div>
+            
+            <div class="table" id="table-grid">
+                <div class="p-center" id="area-center">
+                    <div class="player-label">Mesa</div>
+                    <div style="display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 2px;">
+                        <div id="deck" class="card back interactive" onclick="drawCardClick()" title="Comprar" style="margin:0;"></div>
+                        <div id="top-card" class="card" style="margin:0;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="floating-hand-container" class="floating-hand-overlay" style="display:none; position:absolute; bottom: max(10px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.96); border: 2px solid #f39c12; border-radius: 16px; padding: 6px 10px; gap: 4px; z-index:1100; align-items:center;"></div>
+        </div>
+
+        <!-- MESA TRUCO -->
+        <div id="truco-screen">
+            <div id="header-area">
+                <div class="game-top-hud">
+                    <span id="truco-match-timer">⏱️ 00:00</span>
+                    <span id="truco-score">Eu: 0 | Adversário: 0</span>
+                    <button class="btn btn-quit" onclick="quitMatch()">Abandonar</button>
+                </div>
+                <div class="turn-timer-bar-container">
+                    <div class="turn-timer-bar-fill" id="truco-turn-timer-bar"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 2px; padding: 0 4px;">
+                    <div>
+                        <h3 id="truco-status" style="margin:0; font-size: 11px;">Sua Vez!</h3>
+                        <div class="truco-round-indicators" id="round-dots">
+                            <div class="round-dot" id="dot-1"></div>
+                            <div class="round-dot" id="dot-2"></div>
+                            <div class="round-dot" id="dot-3"></div>
+                        </div>
+                    </div>
+                    <div class="manilhas-bar" id="truco-manilhas-container">
+                        <span style="font-size: 9px; color:#fff; margin-right: 2px;">Manilhas:</span>
+                        <div id="mini-manilhas-list" style="display:flex; gap:2px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table" id="truco-table-grid">
+                <div class="truco-sponsor-top">♠️ CASINO SPONSOR ♠️</div>
+                <div class="truco-sponsor-bottom">♠️ CASINO SPONSOR ♠️</div>
+
+                <div class="p-center" style="display:flex; gap:12px; align-items:center;">
+                    <div class="deck-vira-container" id="truco-deck-container">
+                        <div class="card truco-card card-vira" id="truco-vira">7♦️</div>
+                        <div class="card truco-card truco-back card-deck"></div>
+                    </div>
+
+                    <div class="truco-drop-grid" id="truco-drop-area">
+                        <div class="truco-drop-slot" id="drop-1"></div>
+                        <div class="truco-drop-slot" id="drop-2"></div>
+                        <div class="truco-drop-slot" id="drop-0"></div>
+                        <div class="truco-drop-slot" id="drop-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="truco-controls-left">
+                <button class="btn-truco-action" onclick="askTruco()">PEDIR TRUCO! 🔥</button>
+            </div>
+
+            <div id="card-action-modal">
+                <span style="font-size: 11px; color: #f1c40f; font-weight: bold;">Como deseja jogar?</span>
+                <button style="background:#27ae60" onclick="confirmPlayCard(false)">🃏 Jogar Aberta</button>
+                <button style="background:#7f8c8d" onclick="confirmPlayCard(true)">🙈 Jogar Coberta</button>
+                <button style="background:#e74c3c" onclick="closeCardActionModal()">❌ Cancelar</button>
+            </div>
+
+            <div id="truco-challenge-modal">
+                <h3 style="margin:0; color:#f1c40f; font-size:14px;">🔥 TRUCO PEDIDO!</h3>
+                <div class="challenge-timer-bar">
+                    <div class="challenge-timer-fill" id="challenge-timer-fill"></div>
+                </div>
+                <p style="font-size:12px; margin:2px 0;">A mão passará a valer mais pontos.</p>
+                <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                    <button style="background:#27ae60; font-size:12px;" onclick="respondTrucoChallenge('accept')">✅ Aceitar</button>
+                    <button style="background:#e67e22; font-size:12px;" onclick="respondTrucoChallenge('raise')">🔥 Aumentar!</button>
+                    <button style="background:#e74c3c; font-size:12px;" onclick="respondTrucoChallenge('fold')">🏃 Correr</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MESA PACIÊNCIA -->
+        <div id="paciencia-screen">
+            <div class="paciencia-sponsor-bottomleft">
+                <span>♦️ CASINO CLUB SPONSOR</span>
+            </div>
+
+            <div class="game-top-hud" style="padding: 2px 4px;">
+                <span id="paciencia-timer">⏱️ 00:00</span>
+                <button class="btn btn-quit" onclick="quitMatch()">Abandonar</button>
+            </div>
+
+            <div class="paciencia-board">
+                <div class="paciencia-top-row">
+                    <div class="paciencia-stock-area">
+                        <div class="paciencia-slot pac-card-back" id="pac-stock" onclick="drawPacienciaStock()"></div>
+                        <div class="paciencia-slot" id="pac-waste" onclick="clickWaste()">--</div>
+                    </div>
+                    <div class="paciencia-foundations">
+                        <div class="paciencia-slot" id="foundation-0" onclick="clickFoundation(0)">♦️</div>
+                        <div class="paciencia-slot" id="foundation-1" onclick="clickFoundation(1)">♠️</div>
+                        <div class="paciencia-slot" id="foundation-2" onclick="clickFoundation(2)">♥️</div>
+                        <div class="paciencia-slot" id="foundation-3" onclick="clickFoundation(3)">♣️</div>
+                    </div>
+                </div>
+
+                <div class="paciencia-columns" id="paciencia-tableau"></div>
+            </div>
+
+            <button class="btn-autocomplete" id="btn-autocomplete" onclick="autoCompletePaciencia()">✨ Auto-Completar</button>
+        </div>
+
+        <!-- MESA BATALHA NAVAL -->
+        <div id="naval-screen">
+            <div class="game-top-hud">
+                <span id="naval-status">Seu Turno: Dispare na grade inimiga!</span>
+                <button class="btn btn-quit" onclick="quitMatch()">Abandonar</button>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; flex-grow:1; justify-content:center;">
+                <span style="font-size:11px; color:#38bdf8; font-weight:bold;">OCEANO INIMIGO (DISPARE AQUI)</span>
+                <div class="naval-grid" id="naval-enemy-grid"></div>
+
+                <span style="font-size:10px; color:#94a3b8; margin-top:8px;">SUA FROTA</span>
+                <div class="naval-grid" id="naval-player-grid" style="transform:scale(0.85); margin-top:-10px;"></div>
+            </div>
+        </div>
+
+        <!-- DEV -->
+        <div class="dev-panel" id="dev-panel">
+            <div class="dev-title">🧪 Modo Testador</div>
+            <div class="dev-buttons">
+                <button class="btn-dev" onclick="devAddCoins(1000)">+1.000 🟡</button>
+                <button class="btn-dev" onclick="devAdvanceDay()">+1 Dia Treino</button>
+                <button class="btn-dev" onclick="devToggleApto()">Trocar Apto/Novato</button>
+                <button class="btn-dev" onclick="devReset()">Resetar Tudo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA INFERIOR DE ANÚNCIOS GOOGLE -->
+    <div id="google-ad-banner-bar">
+        <script>
+            googletag.cmd.push(function() { googletag.display('google-ad-banner-bar'); });
+        </script>
+    </div>
+
+<script>
+    let splashTimeout = null;
+
+    function closeSplashScreen() {
+        const splash = document.getElementById('splash-screen');
+        if (!splash || splash.style.display === 'none') return;
+        splash.style.opacity = '0';
+        setTimeout(() => { 
+            splash.style.display = 'none'; 
+            const googleBar = document.getElementById('google-ad-banner-bar');
+            if (googleBar) googleBar.style.display = 'flex';
+        }, 800);
+        if (splashTimeout) clearTimeout(splashTimeout);
+    }
+
+    const DEFAULT_PLAYER = {
+        isApto: false,
+        effectiveDaysCompleted: 0,
+        todayMatchesPlayed: 0,
+        todayAdsWatched: 0,
+        coins: 100,
+        energy: 10,
+        unlockedGames: { paciencia: true, truco: true, naval: true }
+    };
+
+    let playerData = JSON.parse(localStorage.getItem('ff_player_data')) || DEFAULT_PLAYER;
+
+    function savePlayerData() {
+        localStorage.setItem('ff_player_data', JSON.stringify(playerData));
+        updateEconomyUI();
+    }
+
+    function updateEconomyUI() {
+        const maxE = playerData.isApto ? 3 : 10;
+        if (playerData.energy > maxE) playerData.energy = maxE;
+
+        document.getElementById('energy-display').innerText = `${playerData.energy}/${maxE}`;
+        document.getElementById('coins-display').innerText = playerData.coins;
+
+        const ffTopCoins = document.getElementById('ff-top-coins');
+        if (ffTopCoins) ffTopCoins.innerText = playerData.coins;
+
+        const statusPill = document.getElementById('status-pill');
+        const ffTopStatus = document.getElementById('ff-top-status');
+
+        if (playerData.isApto) {
+            if (statusPill) { statusPill.innerText = 'APTO'; statusPill.className = 'status-pill status-apto'; }
+            if (ffTopStatus) { ffTopStatus.innerText = 'APTO'; ffTopStatus.className = 'status-pill status-apto'; }
+            document.getElementById('training-card').style.display = 'none';
+            document.getElementById('apto-card').style.display = 'block';
+        } else {
+            if (statusPill) { statusPill.innerText = 'NOVATO'; statusPill.className = 'status-pill status-novato'; }
+            if (ffTopStatus) { ffTopStatus.innerText = 'NOVATO'; ffTopStatus.className = 'status-pill status-novato'; }
+            document.getElementById('training-card').style.display = 'block';
+            document.getElementById('apto-card').style.display = 'none';
+
+            const pct = (playerData.effectiveDaysCompleted / 7) * 100;
+            document.getElementById('training-progress-fill').style.width = `${pct}%`;
+            document.getElementById('training-days-text').innerText = `Dia ${playerData.effectiveDaysCompleted} / 7`;
+        }
+
+        updateUnlockButton('truco', 4000);
+        updateUnlockButton('paciencia', 1000);
+        updateUnlockButton('naval', 2000);
+    }
+
+    function updateUnlockButton(key, cost) {
+        const btn = document.getElementById(`btn-${key}`);
+        const card = document.getElementById(`card-${key}`);
+        const lock = document.getElementById(`lock-${key}`);
+        if (!btn) return;
+
+        if (playerData.unlockedGames[key]) {
+            if (card) card.classList.add('unlocked');
+            if (lock) lock.style.display = 'none';
+            btn.className = 'btn-hub';
+            btn.innerText = 'Jogar';
+            btn.disabled = false;
+        } else {
+            if (card) card.classList.remove('unlocked');
+            if (lock) lock.style.display = 'block';
+            btn.className = 'btn-hub btn-unlock';
+            btn.innerText = `Desbloquear (🟡 ${cost})`;
+            btn.disabled = playerData.coins < cost;
+        }
+    }
+
+    function unlockGame(key, cost) {
+        if (playerData.coins >= cost) {
+            playerData.coins -= cost;
+            playerData.unlockedGames[key] = true;
+            savePlayerData();
+            alert('Jogo desbloqueado com sucesso!');
+        }
+    }
+
+    function openSetupScreen() {
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('setup-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+    }
+
+    function openTrucoSetup() {
+        if (!playerData.unlockedGames.truco) { unlockGame('truco', 4000); return; }
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('truco-setup-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+        renderTrucoSetupPlayers();
+    }
+
+    function openPacienciaSetup() {
+        if (!playerData.unlockedGames.paciencia) { unlockGame('paciencia', 1000); return; }
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('paciencia-setup-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+    }
+
+    function openNavalSetup() {
+        if (!playerData.unlockedGames.naval) { unlockGame('naval', 2000); return; }
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('naval-setup-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+    }
+
+    let pacDrawCount = 1;
+    function setPacMode(count) {
+        pacDrawCount = count;
+        document.querySelectorAll('#paciencia-setup-screen .btn-count').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`pac-mode-${count}`).classList.add('active');
+    }
+
+    function startPacienciaGameFinal() {
+        document.getElementById('paciencia-setup-screen').style.display = 'none';
+        startPacienciaGame();
+    }
+
+    function showHub() {
+        document.getElementById('global-top-bar').style.display = 'flex';
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('truco-setup-screen').style.display = 'none';
+        document.getElementById('paciencia-setup-screen').style.display = 'none';
+        document.getElementById('naval-setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('truco-screen').style.display = 'none';
+        document.getElementById('paciencia-screen').style.display = 'none';
+        document.getElementById('naval-screen').style.display = 'none';
+        document.getElementById('hub-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'block';
+        stopMatchTimer(); stopTurnTimer(); stopTrucoTimers(); stopPacienciaTimer();
+        updateEconomyUI();
+    }
+
+    function tryStartGame() {
+        if (playerData.energy <= 0) { alert("Sem energia!"); return; }
+        if (playerData.coins < 10) { alert("Moedas insuficientes!"); return; }
+        playerData.energy--; playerData.coins -= 10;
+        savePlayerData(); startGame();
+    }
+
+    function watchAdForEnergy() {
+        const maxE = playerData.isApto ? 3 : 10;
+
+        const adModal = document.createElement('div');
+        adModal.id = 'rewarded-ad-modal';
+        adModal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
+            background: #000; z-index: 99999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white; text-align: center;
+        `;
+        
+        let timer = 5;
+        adModal.innerHTML = `
+            <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;" id="ad-close-btn">
+                Aguarde ${timer}s...
+            </div>
+            <div style="font-size: 14px; color: #f1c40f; margin-bottom: 10px; font-weight: bold;">Anúncio de Teste (Vídeo Recompensado)</div>
+            <div style="width: 280px; height: 160px; background: #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #334155; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
+                <span style="font-size: 40px;">🎬</span>
+            </div>
+            <p style="font-size: 11px; color: #94a3b8; margin-top: 15px;">Simulando exibição de anúncio do Google AdMob...</p>
+        `;
+        document.body.appendChild(adModal);
+
+        const countdown = setInterval(() => {
+            timer--;
+            const btn = document.getElementById('ad-close-btn');
+            if (btn && timer > 0) {
+                btn.innerText = `Aguarde ${timer}s...`;
+            } else if (btn && timer <= 0) {
+                clearInterval(countdown);
+                btn.innerText = '✕ Fechar e Resgatar';
+                btn.style.background = '#e74c3c';
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => {
+                    adModal.remove();
+                    playerData.energy = Math.min(maxE, playerData.energy + 1);
+                    playerData.coins += 40;
+                    savePlayerData();
+                    alert("🎉 Recompensa recebida com sucesso! (+40🟡)");
+                };
+            }
+        }, 1000);
+    }
+
+    let matchSeconds = 0; let timerInterval = null; let turnTimerInterval = null;
+    const TURN_DURATION = 15;
+
+    function startMatchTimer() {
+        matchSeconds = 0;
+        document.getElementById('match-timer').innerText = "⏱️ 00:00";
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            matchSeconds++;
+            let mins = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+            let secs = (matchSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('match-timer').innerText = `⏱️ ${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function stopMatchTimer() { clearInterval(timerInterval); }
+
+    function startTurnTimer() {
+        stopTurnTimer();
+        const bar = document.getElementById('turn-timer-bar');
+        if (!bar) return;
+        let timeLeft = TURN_DURATION;
+        bar.style.width = "100%"; bar.style.backgroundColor = "#f39c12";
+
+        turnTimerInterval = setInterval(() => {
+            timeLeft -= 0.1;
+            let pct = (timeLeft / TURN_DURATION) * 100;
+            bar.style.width = `${pct}%`;
+            if (pct < 30) bar.style.backgroundColor = "#e74c3c";
+            if (timeLeft <= 0) { stopTurnTimer(); handleTurnTimeout(); }
+        }, 100);
+    }
+
+    function stopTurnTimer() {
+        clearInterval(turnTimerInterval);
+        const bar = document.getElementById('turn-timer-bar');
+        if (bar) bar.style.width = "100%";
+    }
+
+    function handleTurnTimeout() {
+        if (!gameOver) executeAutoTurn(currentTurn);
+    }
+
+    function quitMatch() {
+        if (confirm("Deseja realmente abandonar a partida?")) {
+            stopMatchTimer(); stopTurnTimer(); stopTrucoTimers(); stopPacienciaTimer();
+            gameOver = true; showHub();
+        }
+    }
+
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    let numPlayers = 6; let players = []; let deck = []; let discardPile = [];
+    let topCard = null; let currentTurn = 0; let turnDirection = 1;
+    let handRevealed = false; let gameOver = false; let gameStarted = false;
+    let pendingWildCardIdx = null;
+    let currentHandPage = 0;
+
+    const tableBackgrounds = [
+        "FRIENDLY FIRE/ASSETS/image_backstage_6_1.png",
+        "FRIENDLY FIRE/ASSETS/image_backstage_6_2.png",
+        "FRIENDLY FIRE/ASSETS/image_backstage_6_3.png",
+        "FRIENDLY FIRE/ASSETS/image_backstage_6_4.png"
+    ];
+
+    function attachTrigger(element, fn) {
+        if (!element) return;
+        element.addEventListener('click', (e) => { e.preventDefault(); fn(e); });
+        element.addEventListener('touchend', (e) => { e.preventDefault(); fn(e); });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateEconomyUI(); renderSetupPlayers();
+        splashTimeout = setTimeout(closeSplashScreen, 2500);
+    });
+
+    function setPlayerCount(count) {
+        numPlayers = count;
+        document.querySelectorAll('#setup-screen .btn-count').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`cnt-${count}`).classList.add('active');
+        renderSetupPlayers();
+    }
+
+    function renderSetupPlayers() {
+        const container = document.getElementById('players-list');
+        if (!container) return;
+        container.innerHTML = ''; players = [];
+        for (let i = 0; i < numPlayers; i++) {
+            const defaultType = (i === 0) ? "Humano" : "CPU";
+            players.push({ name: `Jogador ${i + 1}`, type: defaultType, hand: [] });
+            const div = document.createElement('div');
+            div.className = 'player-config';
+            div.innerHTML = `<span>${players[i].name}:</span> ${i === 0 ? `<b>Humano</b>` : `<button type="button" id="btn-p${i}">${players[i].type}</button>`}`;
+            container.appendChild(div);
+            if (i > 0) attachTrigger(div.querySelector(`#btn-p${i}`), () => toggleType(i));
+        }
+    }
+
+    function toggleType(idx) {
+        players[idx].type = (players[idx].type === "CPU") ? "Humano" : "CPU";
+        const btn = document.getElementById(`btn-p${idx}`);
+        if (btn) btn.innerText = players[idx].type;
+    }
+
+    function getCardSymbol(val) {
+        if (val === 'Bloqueio') return '🚫';
+        if (val === 'Inverter') return '🔁';
+        if (val === 'Coringa') return '🌈';
+        if (val === 'TrocarMao') return '🔄';
+        return val;
+    }
+
+    function animateCardFlow(startEl, endEl, cardData, callback) {
+        if (!startEl || !endEl) { if (callback) callback(); return; }
+        const startRect = startEl.getBoundingClientRect();
+        const endRect = endEl.getBoundingClientRect();
+
+        const flyer = document.createElement('div');
+        flyer.className = `card ${cardData ? cardData.color : 'back'} flying-card`;
+        flyer.innerText = cardData ? getCardSymbol(cardData.value) : '';
+        flyer.style.left = `${startRect.left}px`; flyer.style.top = `${startRect.top}px`;
+        document.body.appendChild(flyer);
+
+        flyer.getBoundingClientRect();
+        flyer.style.left = `${endRect.left}px`; flyer.style.top = `${endRect.top}px`;
+
+        setTimeout(() => { flyer.remove(); if (callback) callback(); }, 300);
+    }
+
+    function buildTableSlots() {
+        const table = document.getElementById('table-grid');
+        const center = document.getElementById('area-center');
+        table.innerHTML = ''; table.appendChild(center);
+
+        const posMap = {
+            2: [ { class: 'pos-2-bottom' }, { class: 'pos-2-top' } ],
+            3: [ { class: 'pos-2-bottom' }, { class: 'pos-3-left' }, { class: 'pos-2-top' } ],
+            4: [ { class: 'pos-2-bottom' }, { class: 'pos-3-left' }, { class: 'pos-2-top' }, { class: 'pos-4-right' } ],
+            5: [ { class: 'pos-sul' }, { class: 'pos-bottom-left' }, { class: 'pos-top-left' }, { class: 'pos-norte' }, { class: 'pos-4-right' } ],
+            6: [ { class: 'pos-sul' }, { class: 'pos-bottom-left' }, { class: 'pos-top-left' }, { class: 'pos-norte' }, { class: 'pos-top-right' }, { class: 'pos-bottom-right' } ]
+        };
+
+        const slots = posMap[numPlayers];
+        for (let i = 0; i < numPlayers; i++) {
+            const div = document.createElement('div');
+            div.className = `player-slot ${slots[i].class}`;
+            div.id = `area-${i}`;
+            div.innerHTML = `<div class="player-label" id="label-p${i}">${players[i].name}</div><div class="hand" id="hand-${i}"></div>`;
+            table.appendChild(div);
+        }
+    }
+
+    function createOfficialDeck() {
+        deck = []; discardPile = [];
+        colors.forEach(color => {
+            deck.push({ color, value: '0' });
+            for (let i = 1; i <= 9; i++) {
+                deck.push({ color, value: i.toString() }, { color, value: i.toString() });
+            }
+            ['Bloqueio', 'Inverter', '+2'].forEach(spec => {
+                deck.push({ color, value: spec }, { color, value: spec });
+            });
+        });
+        for (let i = 0; i < 4; i++) {
+            deck.push({ color: 'black', value: 'Coringa' });
+            deck.push({ color: 'black', value: '+4' });
+        }
+        deck.push({ color: 'black', value: 'TrocarMao' });
+        deck.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame() {
+        document.getElementById('global-top-bar').style.display = 'none';
+
+        const randomBg = tableBackgrounds[Math.floor(Math.random() * tableBackgrounds.length)];
+        const gameScreen = document.getElementById('game-screen');
+        gameScreen.style.backgroundImage = `url("${randomBg}")`;
+
+        createOfficialDeck(); buildTableSlots();
+        gameStarted = true; gameOver = false; currentTurn = 0; turnDirection = 1; handRevealed = false; currentHandPage = 0;
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+        for (let i = 0; i < numPlayers; i++) players[i].hand = deck.splice(0, 7);
+        do { topCard = deck.pop(); } while (topCard.color === 'black');
+        startMatchTimer(); updateUI(); processTurn();
+    }
+
+    function toggleFloatingHand() { handRevealed = !handRevealed; currentHandPage = 0; updateUI(); }
+
+    function updateUI() {
+        if (!gameStarted) return;
+        const topEl = document.getElementById('top-card');
+        topEl.className = `card ${topCard.color}`;
+        topEl.innerText = getCardSymbol(topCard.value);
+
+        const hasHumanPlayers = players.some(p => p.type === "Humano");
+        const isHumano = players[currentTurn].type === "Humano";
+        const floatingContainer = document.getElementById('floating-hand-container');
+        const btnReveal = document.getElementById('btn-reveal');
+
+        if (hasHumanPlayers && isHumano) {
+            btnReveal.style.visibility = 'visible';
+            btnReveal.innerText = handRevealed ? "👁️ Ocultar Cartas" : "👁️ Ver Cartas";
+        } else {
+            btnReveal.style.visibility = 'hidden';
+        }
+
+        for (let i = 0; i < numPlayers; i++) {
+            const handEl = document.getElementById(`hand-${i}`);
+            const labelEl = document.getElementById(`label-p${i}`);
+            if (!handEl || !labelEl) continue;
+
+            if (i === currentTurn) labelEl.classList.add('turn-active');
+            else labelEl.classList.remove('turn-active');
+
+            if (players[i].hand.length === 1) labelEl.classList.add('uno-alert');
+            else labelEl.classList.remove('uno-alert');
+
+            if (i === currentTurn && isHumano && handRevealed) { handEl.classList.add('cards-picked'); }
+            else { handEl.classList.remove('cards-picked'); }
+
+            handEl.innerHTML = '';
+            const totalCardsInHand = players[i].hand.length;
+
+            const baseSpread = Math.min(3, totalCardsInHand);
+            
+            for (let cIdx = 0; cIdx < baseSpread; cIdx++) {
+                const card = players[i].hand[cIdx];
+                const cardDiv = document.createElement('div');
+                if (!hasHumanPlayers) {
+                    cardDiv.className = `card ${card.color}`;
+                    cardDiv.innerText = getCardSymbol(card.value);
+                } else {
+                    cardDiv.className = 'card back';
+                }
+                cardDiv.style.margin = `0 -22px`;
+                handEl.appendChild(cardDiv);
+            }
+
+            if (totalCardsInHand > 3) {
+                const topStackCard = players[i].hand[totalCardsInHand - 1];
+                const topDiv = document.createElement('div');
+                if (!hasHumanPlayers) {
+                    topDiv.className = `card ${topStackCard.color}`;
+                    topDiv.innerText = getCardSymbol(topStackCard.value);
+                } else {
+                    topDiv.className = 'card back';
+                }
+                topDiv.style.margin = `0 -22px`;
+                topDiv.style.boxShadow = `-2px 2px 0px #ffffff, -3px 3px 4px rgba(0,0,0,0.4)`;
+                handEl.appendChild(topDiv);
+            }
+        }
+
+        if (hasHumanPlayers && isHumano && handRevealed) {
+            floatingContainer.style.display = 'flex';
+            floatingContainer.innerHTML = '';
+
+            const totalCards = players[currentTurn].hand.length;
+            const pageSize = 7;
+            const maxPages = Math.ceil(totalCards / pageSize);
+
+            if (currentHandPage >= maxPages) currentHandPage = Math.max(0, maxPages - 1);
+
+            if (totalCards > pageSize) {
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'hand-nav-btn';
+                prevBtn.innerText = '◀';
+                prevBtn.disabled = (currentHandPage === 0);
+                if (currentHandPage === 0) prevBtn.style.opacity = '0.3';
+                attachTrigger(prevBtn, () => { if (currentHandPage > 0) { currentHandPage--; updateUI(); } });
+                floatingContainer.appendChild(prevBtn);
+            }
+
+            const startIdx = currentHandPage * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, totalCards);
+
+            for (let cardIdx = startIdx; cardIdx < endIdx; cardIdx++) {
+                const card = players[currentTurn].hand[cardIdx];
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card ${card.color} interactive`;
+                cardDiv.id = `floating-card-${cardIdx}`;
+                cardDiv.innerText = getCardSymbol(card.value);
+                attachTrigger(cardDiv, () => playCard(currentTurn, cardIdx));
+                floatingContainer.appendChild(cardDiv);
+            }
+
+            if (totalCards > pageSize) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'hand-nav-btn';
+                nextBtn.innerText = '▶';
+                nextBtn.disabled = (currentHandPage >= maxPages - 1);
+                if (currentHandPage >= maxPages - 1) nextBtn.style.opacity = '0.3';
+                attachTrigger(nextBtn, () => { if (currentHandPage < maxPages - 1) { currentHandPage++; updateUI(); } });
+                floatingContainer.appendChild(nextBtn);
+            }
+        } else {
+            floatingContainer.style.display = 'none';
+        }
+
+        document.getElementById('status-msg').innerText = `Vez de: ${players[currentTurn].name} (${players[currentTurn].type})`;
+    }
+
+    function isValidPlay(card) {
+        if (card.color === 'black') return true;
+        return card.color === topCard.color || card.value === topCard.value;
+    }
+
+    function playCard(playerIdx, cardIdx) {
+        if (playerIdx !== currentTurn || gameOver) return;
+        const card = players[playerIdx].hand[cardIdx];
+        if (!isValidPlay(card)) { alert("Carta inválida!"); return; }
+        stopTurnTimer();
+        if (card.color === 'black') {
+            pendingWildCardIdx = cardIdx;
+            if (players[playerIdx].type === "Humano") {
+                document.getElementById('color-picker').style.display = 'block'; return;
+            } else {
+                chooseColor(colors[Math.floor(Math.random() * 4)]); return;
+            }
+        }
+        executePlay(playerIdx, cardIdx, card.color);
+    }
+
+    function chooseColor(selectedColor) {
+        document.getElementById('color-picker').style.display = 'none';
+        if (pendingWildCardIdx !== null) {
+            executePlay(currentTurn, pendingWildCardIdx, selectedColor);
+            pendingWildCardIdx = null;
+        }
+    }
+
+    function executePlay(playerIdx, cardIdx, chosenColor) {
+        const card = players[playerIdx].hand[cardIdx];
+        const startEl = document.getElementById(`floating-card-${cardIdx}`) || document.getElementById(`area-${playerIdx}`) || document.getElementById(`hand-${playerIdx}`);
+        const endEl = document.getElementById('top-card');
+
+        animateCardFlow(startEl, endEl, { color: chosenColor, value: card.value }, () => {
+            discardPile.push(topCard);
+            topCard = { color: chosenColor, value: card.value };
+            players[playerIdx].hand.splice(cardIdx, 1);
+            handRevealed = false;
+
+            if (checkWin(playerIdx)) return;
+            
+            let skipNext = (card.value === 'Bloqueio');
+            if (card.value === 'Inverter') turnDirection *= -1;
+            if (card.value === '+2') giveCardsToNext(2);
+            if (card.value === '+4') giveCardsToNext(4);
+            if (card.value === 'TrocarMao') swapHands(playerIdx);
+
+            nextTurn(skipNext);
+        });
+    }
+
+    function swapHands(playerIdx) {
+        let nextPlayerIdx = (playerIdx + turnDirection + numPlayers) % numPlayers;
+        let tempHand = players[playerIdx].hand;
+        players[playerIdx].hand = players[nextPlayerIdx].hand;
+        players[nextPlayerIdx].hand = tempHand;
+    }
+
+    function giveCardsToNext(count) {
+        let nextPlayerIdx = (currentTurn + turnDirection + numPlayers) % numPlayers;
+        for (let i = 0; i < count; i++) drawCard(nextPlayerIdx);
+    }
+
+    function drawCardClick() {
+        if (players[currentTurn].type === "Humano" && !gameOver) {
+            stopTurnTimer();
+            const startEl = document.getElementById('deck');
+            const endEl = document.getElementById(`area-${currentTurn}`) || document.getElementById(`hand-${currentTurn}`);
+            animateCardFlow(startEl, endEl, null, () => {
+                drawCard(currentTurn); handRevealed = false; nextTurn(false);
+            });
+        }
+    }
+
+    function drawCard(playerIdx) {
+        if (deck.length === 0 && discardPile.length > 0) {
+            let topCurrent = topCard;
+            deck = discardPile.sort(() => Math.random() - 0.5);
+            discardPile = [topCurrent];
+        }
+        if (deck.length > 0) players[playerIdx].hand.push(deck.pop());
+    }
+
+    function checkWin(playerIdx) {
+        if (players[playerIdx].hand.length === 0) {
+            gameOver = true; stopMatchTimer(); stopTurnTimer();
+            alert(`🎉 ${players[playerIdx].name} VENCEU!`); showHub(); return true;
+        }
+        return false;
+    }
+
+    function nextTurn(skip) {
+        let steps = skip ? 2 : 1;
+        currentTurn = (currentTurn + (turnDirection * steps) + numPlayers) % numPlayers;
+        updateUI(); processTurn();
+    }
+
+    function executeAutoTurn(pIdx) {
+        const hand = players[pIdx].hand;
+        let idx = hand.findIndex(c => (c.value >= '0' && c.value <= '9') && (c.color === topCard.color || c.value === topCard.value));
+        if (idx !== -1) { playCard(pIdx, idx); return; }
+        drawCard(pIdx); nextTurn(false);
+    }
+
+    function processTurn() {
+        if (gameOver || !gameStarted) return;
+        startTurnTimer();
+        if (players[currentTurn] && players[currentTurn].type !== "Humano") {
+            setTimeout(() => { if (!gameOver) executeAutoTurn(currentTurn); }, 1000);
+        }
+    }
+
+    /* TRUCO ENGINE */
+    let trucoMatchSeconds = 0; let trucoTimerInterval = null; let trucoTurnTimerInterval = null;
+
+    function startTrucoTimers() {
+        trucoMatchSeconds = 0;
+        document.getElementById('truco-match-timer').innerText = "⏱️ 00:00";
+        clearInterval(trucoTimerInterval);
+        trucoTimerInterval = setInterval(() => {
+            trucoMatchSeconds++;
+            let mins = Math.floor(trucoMatchSeconds / 60).toString().padStart(2, '0');
+            let secs = (trucoMatchSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('truco-match-timer').innerText = `⏱️ ${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function startTrucoTurnTimer() {
+        clearInterval(trucoTurnTimerInterval);
+        const bar = document.getElementById('truco-turn-timer-bar');
+        if (!bar) return;
+        let timeLeft = TURN_DURATION;
+        bar.style.width = "100%"; bar.style.backgroundColor = "#f39c12";
+
+        trucoTurnTimerInterval = setInterval(() => {
+            timeLeft -= 0.1;
+            let pct = (timeLeft / TURN_DURATION) * 100;
+            bar.style.width = `${pct}%`;
+            if (pct < 30) bar.style.backgroundColor = "#e74c3c";
+            if (timeLeft <= 0) {
+                clearInterval(trucoTurnTimerInterval);
+                if (trucoState.turn === 0) playTrucoCard(0, false);
+            }
+        }, 100);
+    }
+
+    function stopTrucoTimers() {
+        clearInterval(trucoTimerInterval); clearInterval(trucoTurnTimerInterval);
+    }
+
+    let trucoConfig = { playersCount: 2, players: [] };
+    let trucoState = {
+        nosPoints: 0, elesPoints: 0, maoValue: 1, lastChallenger: null,
+        viraCard: null, manilhaVal: '', hands: [], playedCards: [],
+        roundWins: [0, 0], turn: 0, pendingCardIdx: null, roundHistory: [], isMaoDeFerro: false
+    };
+
+    const trucoCardOrder = ['4', '5', '6', '7', 'Q', 'J', 'K', 'A', '2', '3'];
+    const suits = ['♦️', '♠️', '♥️', '♣️'];
+
+    function setTrucoPlayerCount(count) {
+        trucoConfig.playersCount = count;
+        document.querySelectorAll('#truco-setup-screen .btn-count').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`truco-cnt-${count}`).classList.add('active');
+        renderTrucoSetupPlayers();
+    }
+
+    function renderTrucoSetupPlayers() {
+        const container = document.getElementById('truco-players-list');
+        container.innerHTML = '';
+        if (trucoConfig.playersCount === 2) {
+            trucoConfig.players = [ { name: 'Eu', type: 'Humano' }, { name: 'Adversário', type: 'CPU' } ];
+        } else {
+            trucoConfig.players = [
+                { name: 'Você (Nós)', type: 'Humano' },
+                { name: 'Adversário 1 (Eles)', type: 'CPU' },
+                { name: 'Parceiro (Nós)', type: 'CPU' },
+                { name: 'Adversário 2 (Eles)', type: 'CPU' }
+            ];
+        }
+        trucoConfig.players.forEach((p) => {
+            const div = document.createElement('div');
+            div.className = 'player-config';
+            div.innerHTML = `<span>${p.name}:</span> <b>${p.type}</b>`;
+            container.appendChild(div);
+        });
+    }
+
+    function buildTrucoTableSlots() {
+        const table = document.getElementById('truco-table-grid');
+        const center = table.querySelector('.p-center');
+        table.innerHTML = `
+            <div class="truco-sponsor-top">♠️ CASINO SPONSOR ♠️</div>
+            <div class="truco-sponsor-bottom">♠️ CASINO SPONSOR ♠️</div>
+        `;
+        table.appendChild(center);
+
+        const positions = trucoConfig.playersCount === 2 
+            ? [{ class: 'p-truco-bottom', id: 0 }, { class: 'p-truco-top', id: 1 }]
+            : [{ class: 'p-truco-bottom', id: 0 }, { class: 'p-truco-left', id: 1 }, { class: 'p-truco-top', id: 2 }, { class: 'p-truco-right', id: 3 }];
+
+        positions.forEach(pos => {
+            const div = document.createElement('div');
+            div.className = `player-slot ${pos.class}`; div.id = `truco-slot-${pos.id}`;
+            div.innerHTML = `<div class="player-label" id="truco-label-${pos.id}">${trucoConfig.players[pos.id].name}</div><div class="hand" id="truco-hand-${pos.id}"></div>`;
+            table.appendChild(div);
+        });
+    }
+
+    function startTrucoGame() {
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('truco-setup-screen').style.display = 'none';
+        document.getElementById('truco-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+        buildTrucoTableSlots(); trucoState.nosPoints = 0; trucoState.elesPoints = 0;
+        startTrucoTimers(); startTrucoMao();
+    }
+
+    function generateTrucoDeck() {
+        let deck = [];
+        trucoCardOrder.forEach(val => { suits.forEach(suit => deck.push({ val, suit })); });
+        return deck.sort(() => Math.random() - 0.5);
+    }
+
+    function getCardSuitColorClass(suit) { return (suit === '♥️' || suit === '♦️') ? 'suit-red' : 'suit-black'; }
+
+    function startTrucoMao() {
+        trucoState.maoValue = 1; trucoState.lastChallenger = null;
+        trucoState.roundWins = [0, 0]; trucoState.roundHistory = []; trucoState.playedCards = []; trucoState.turn = 0;
+        trucoState.isMaoDeFerro = (trucoState.nosPoints === 11 && trucoState.elesPoints === 11);
+
+        let deck = generateTrucoDeck(); trucoState.viraCard = deck.pop();
+        let viraIdx = trucoCardOrder.indexOf(trucoState.viraCard.val);
+        let manilhaValIdx = (viraIdx + 1) % trucoCardOrder.length;
+        trucoState.manilhaVal = trucoCardOrder[manilhaValIdx];
+
+        const viraEl = document.getElementById('truco-vira');
+        viraEl.innerText = `${trucoState.viraCard.val}${trucoState.viraCard.suit}`;
+        viraEl.className = `card truco-card card-vira ${getCardSuitColorClass(trucoState.viraCard.suit)}`;
+
+        const miniManilhas = document.getElementById('mini-manilhas-list');
+        miniManilhas.innerHTML = '';
+        suits.forEach(suit => {
+            const m = document.createElement('div');
+            m.className = `mini-card ${getCardSuitColorClass(suit)}`;
+            m.innerText = `${trucoState.manilhaVal}${suit}`;
+            miniManilhas.appendChild(m);
+        });
+
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById(`drop-${i}`);
+            if (el) el.innerHTML = ``;
+        }
+
+        trucoState.hands = [];
+        for (let i = 0; i < trucoConfig.playersCount; i++) {
+            trucoState.hands.push([deck.pop(), deck.pop(), deck.pop()]);
+        }
+        if (trucoState.nosPoints === 11 || trucoState.elesPoints === 11) trucoState.maoValue = 3;
+        updateTrucoUI();
+    }
+
+    function updateTrucoUI() {
+        const is2vs2 = (trucoConfig.playersCount === 4);
+        const labelP1 = is2vs2 ? "Nós" : "Eu"; const labelP2 = is2vs2 ? "Eles" : "Adversário";
+        document.getElementById('truco-score').innerText = `${labelP1}: ${trucoState.nosPoints} | ${labelP2}: ${trucoState.elesPoints}`;
+
+        for (let r = 1; r <= 3; r++) {
+            const dot = document.getElementById(`dot-${r}`);
+            if (!dot) continue;
+            dot.className = 'round-dot';
+            if (trucoState.roundHistory[r - 1] === 'NOS') dot.classList.add('win-nos');
+            if (trucoState.roundHistory[r - 1] === 'ELES') dot.classList.add('win-eles');
+        }
+
+        for (let i = 0; i < trucoConfig.playersCount; i++) {
+            const container = document.getElementById(`truco-hand-${i}`);
+            const label = document.getElementById(`truco-label-${i}`);
+            if (!container || !label) continue;
+
+            if (i === trucoState.turn) label.classList.add('turn-active');
+            else label.classList.remove('turn-active');
+
+            container.innerHTML = '';
+            trucoState.hands[i].forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                if (i === 0) {
+                    if (trucoState.isMaoDeFerro) {
+                        cardEl.className = 'card truco-card truco-back interactive';
+                    } else {
+                        cardEl.className = `card truco-card interactive ${getCardSuitColorClass(card.suit)}`;
+                        cardEl.innerText = `${card.val}${card.suit}`;
+                    }
+                    cardEl.onclick = () => openCardActionModal(idx);
+                } else {
+                    cardEl.className = 'card truco-card truco-back';
+                }
+                container.appendChild(cardEl);
+            });
+        }
+        if (trucoState.turn === 0 && trucoState.hands[0].length > 0) startTrucoTurnTimer();
+    }
+
+    function openCardActionModal(cardIdx) {
+        trucoState.pendingCardIdx = cardIdx;
+        document.getElementById('card-action-modal').style.display = 'flex';
+    }
+
+    function closeCardActionModal() {
+        document.getElementById('card-action-modal').style.display = 'none';
+        trucoState.pendingCardIdx = null;
+    }
+
+    function confirmPlayCard(isCovered) {
+        if (trucoState.pendingCardIdx !== null) {
+            const idx = trucoState.pendingCardIdx;
+            closeCardActionModal(); playTrucoCard(idx, isCovered);
+        }
+    }
+
+    function getCardPower(card) {
+        if (!card || card.covered) return -1;
+        if (card.val === trucoState.manilhaVal) {
+            const suitOrder = { '♦️': 100, '♠️': 101, '♥️': 102, '♣️': 103 };
+            return suitOrder[card.suit];
+        }
+        return trucoCardOrder.indexOf(card.val);
+    }
+
+    function playTrucoCard(cardIdx, isCovered) {
+        clearInterval(trucoTurnTimerInterval);
+        const card = trucoState.hands[trucoState.turn].splice(cardIdx, 1)[0];
+        card.covered = isCovered;
+        trucoState.playedCards.push({ player: trucoState.turn, card });
+
+        const startEl = document.getElementById(`truco-slot-${trucoState.turn}`);
+        const target = document.getElementById(`drop-${trucoState.turn}`);
+
+        animateCardFlow(startEl, target, isCovered ? null : { color: 'red', value: `${card.val}${card.suit}` }, () => {
+            if (isCovered || trucoState.isMaoDeFerro) {
+                target.innerHTML = `<div class="card truco-card truco-back"></div>`;
+            } else {
+                target.innerHTML = `<div class="card truco-card ${getCardSuitColorClass(card.suit)}">${card.val}${card.suit}</div>`;
+            }
+
+            if (trucoState.playedCards.length < trucoConfig.playersCount) {
+                trucoState.turn = (trucoState.turn + 1) % trucoConfig.playersCount;
+                updateTrucoUI();
+                if (trucoState.turn !== 0) setTimeout(cpuPlayTruco, 800);
+            } else {
+                setTimeout(evaluateTrucoRound, 1000);
+            }
+        });
+    }
+
+    function cpuPlayTruco() {
+        if (trucoState.hands[trucoState.turn].length === 0) return;
+        let chosenIdx = Math.floor(Math.random() * trucoState.hands[trucoState.turn].length);
+        playTrucoCard(chosenIdx, false);
+    }
+
+    function evaluateTrucoRound() {
+        let best = trucoState.playedCards[0];
+        for (let i = 1; i < trucoState.playedCards.length; i++) {
+            if (getCardPower(trucoState.playedCards[i].card) > getCardPower(best.card)) {
+                best = trucoState.playedCards[i];
+            }
+        }
+
+        const isNos = (best.player % 2 === 0);
+        if (isNos) { trucoState.roundWins[0]++; trucoState.roundHistory.push('NOS'); }
+        else { trucoState.roundWins[1]++; trucoState.roundHistory.push('ELES'); }
+
+        trucoState.playedCards = [];
+        for (let i = 0; i < 4; i++) {
+            const el = document.getElementById(`drop-${i}`);
+            if (el) el.innerHTML = ``;
+        }
+
+        if (trucoState.roundWins[0] >= 2) {
+            trucoState.nosPoints += trucoState.maoValue; alert(`🎉 Ponto nosso (+${trucoState.maoValue} pts)!`); checkTrucoWinner();
+        } else if (trucoState.roundWins[1] >= 2) {
+            trucoState.elesPoints += trucoState.maoValue; alert(`💔 Ponto deles (+${trucoState.maoValue} pts)!`); checkTrucoWinner();
+        } else {
+            trucoState.turn = best.player; updateTrucoUI();
+            if (trucoState.turn !== 0) setTimeout(cpuPlayTruco, 800);
+        }
+    }
+
+    function checkTrucoWinner() {
+        if (trucoState.nosPoints >= 12) { alert("🏆 VITÓRIA NO TRUCO!"); showHub(); }
+        else if (trucoState.elesPoints >= 12) { alert("💔 DERROTA NO TRUCO!"); showHub(); }
+        else { startTrucoMao(); }
+    }
+
+    function askTruco() {
+        const nextVal = trucoState.maoValue === 1 ? 3 : trucoState.maoValue + 3;
+        trucoState.maoValue = nextVal; trucoState.lastChallenger = 'NÓS';
+        alert(`🔥 Truco pedido! Valendo ${nextVal} pontos.`);
+    }
+
+    function respondTrucoChallenge(action) {
+        document.getElementById('truco-challenge-modal').style.display = 'none';
+    }
+
+    /* PACIÊNCIA ENGINE */
+    let pacSeconds = 0; let pacTimerInterval = null;
+    let pacStockDeck = []; let pacWasteDeck = [];
+    let pacFoundations = [[], [], [], []]; let pacTableau = [[], [], [], [], [], [], []];
+    let pacSelectedCard = null;
+
+    function startPacienciaGame() {
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('paciencia-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+
+        pacSeconds = 0; document.getElementById('paciencia-timer').innerText = "⏱️ 00:00";
+        clearInterval(pacTimerInterval);
+        pacTimerInterval = setInterval(() => {
+            pacSeconds++;
+            let mins = Math.floor(pacSeconds / 60).toString().padStart(2, '0');
+            let secs = (pacSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('paciencia-timer').innerText = `⏱️ ${mins}:${secs}`;
+        }, 1000);
+
+        initKlondike();
+    }
+
+    function stopPacienciaTimer() { clearInterval(pacTimerInterval); }
+
+    function initKlondike() {
+        let deck = [];
+        const cardVals = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        suits.forEach(suit => { cardVals.forEach(val => deck.push({ val, suit, faceUp: false })); });
+        deck.sort(() => Math.random() - 0.5);
+
+        pacFoundations = [[], [], [], []]; pacTableau = [[], [], [], [], [], [], []];
+        pacWasteDeck = []; pacSelectedCard = null;
+
+        for (let col = 0; col < 7; col++) {
+            for (let i = 0; i <= col; i++) {
+                let card = deck.pop();
+                if (i === col) card.faceUp = true;
+                pacTableau[col].push(card);
+            }
+        }
+        pacStockDeck = deck; renderKlondike();
+    }
+
+    const cardRankOrder = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+
+    function renderKlondike() {
+        const stockEl = document.getElementById('pac-stock');
+        stockEl.className = pacStockDeck.length > 0 ? 'paciencia-slot pac-card-back' : 'paciencia-slot';
+        stockEl.innerText = pacStockDeck.length > 0 ? '' : '♻️';
+
+        const wasteEl = document.getElementById('pac-waste');
+        if (pacWasteDeck.length > 0) {
+            let topW = pacWasteDeck[pacWasteDeck.length - 1];
+            wasteEl.innerHTML = `<div class="pac-card-header">${topW.val}${topW.suit}</div><div class="pac-card-center">${topW.suit}</div>`;
+            wasteEl.className = `paciencia-slot ${getCardSuitColorClass(topW.suit)} ${pacSelectedCard && pacSelectedCard.source === 'waste' ? 'selected' : ''}`;
+        } else {
+            wasteEl.innerText = '--'; wasteEl.className = 'paciencia-slot';
+        }
+
+        for (let f = 0; f < 4; f++) {
+            const fEl = document.getElementById(`foundation-${f}`);
+            if (pacFoundations[f].length > 0) {
+                let topF = pacFoundations[f][pacFoundations[f].length - 1];
+                fEl.innerHTML = `<div class="pac-card-header">${topF.val}${topF.suit}</div><div class="pac-card-center">${topF.suit}</div>`;
+                fEl.className = `paciencia-slot ${getCardSuitColorClass(topF.suit)}`;
+            } else {
+                fEl.innerText = suits[f]; fEl.className = 'paciencia-slot';
+            }
+        }
+
+        const tableauContainer = document.getElementById('paciencia-tableau');
+        tableauContainer.innerHTML = '';
+
+        for (let c = 0; c < 7; c++) {
+            const colIdx = c;
+            const colEl = document.createElement('div');
+            colEl.className = 'paciencia-col';
+            colEl.onclick = (e) => { e.stopPropagation(); clickColumn(colIdx); };
+
+            if (pacTableau[c].length === 0) {
+                colEl.style.border = '1px dashed rgba(255,255,255,0.2)'; colEl.style.borderRadius = '4px';
+            }
+
+            pacTableau[c].forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                if (card.faceUp) {
+                    cardEl.className = `pac-card ${getCardSuitColorClass(card.suit)}`;
+                    if (pacSelectedCard && pacSelectedCard.source === 'tableau' && pacSelectedCard.colIdx === c && idx >= pacSelectedCard.cardIdx) {
+                        cardEl.classList.add('selected');
+                    }
+                    cardEl.innerHTML = `
+                        <div class="pac-card-header">${card.val}${card.suit}</div>
+                        <div class="pac-card-center">${card.suit}</div>
+                    `;
+                } else {
+                    cardEl.className = 'pac-card pac-card-back';
+                }
+                cardEl.style.top = `${idx * 22}px`;
+                colEl.appendChild(cardEl);
+            });
+            tableauContainer.appendChild(colEl);
+        }
+    }
+
+    function drawPacienciaStock() {
+        if (pacStockDeck.length === 0) {
+            if (pacWasteDeck.length > 0) {
+                pacStockDeck = pacWasteDeck.reverse().map(c => { c.faceUp = false; return c; });
+                pacWasteDeck = [];
+            }
+            renderKlondike(); return;
+        }
+        let countToDraw = pacDrawCount === 3 ? Math.min(3, pacStockDeck.length) : 1;
+        for (let i = 0; i < countToDraw; i++) {
+            let card = pacStockDeck.pop();
+            card.faceUp = true;
+            pacWasteDeck.push(card);
+        }
+        pacSelectedCard = null; renderKlondike();
+    }
+
+    function clickWaste() {
+        if (pacWasteDeck.length > 0) {
+            pacSelectedCard = { source: 'waste', card: pacWasteDeck[pacWasteDeck.length - 1] };
+            renderKlondike();
+        }
+    }
+
+    function clickColumn(colIdx) {
+        let col = pacTableau[colIdx];
+        if (pacSelectedCard) {
+            let destTop = col.length > 0 ? col[col.length - 1] : null;
+            let movingCard = pacSelectedCard.source === 'waste' ? pacSelectedCard.card : pacTableau[pacSelectedCard.colIdx][pacSelectedCard.cardIdx];
+
+            let isValid = false;
+            if (!destTop) {
+                if (movingCard.val === 'K') isValid = true;
+            } else if (destTop.faceUp) {
+                let isDestRed = (destTop.suit === '♥️' || destTop.suit === '♦️');
+                let isMovingRed = (movingCard.suit === '♥️' || movingCard.suit === '♦️');
+                if (isDestRed !== isMovingRed && cardRankOrder[destTop.val] === cardRankOrder[movingCard.val] + 1) {
+                    isValid = true;
+                }
+            }
+
+            if (isValid) {
+                if (pacSelectedCard.source === 'waste') {
+                    col.push(pacWasteDeck.pop());
+                } else {
+                    let movingStack = pacTableau[pacSelectedCard.colIdx].splice(pacSelectedCard.cardIdx);
+                    pacTableau[colIdx].push(...movingStack);
+                    let srcCol = pacTableau[pacSelectedCard.colIdx];
+                    if (srcCol.length > 0 && !srcCol[srcCol.length - 1].faceUp) {
+                        srcCol[srcCol.length - 1].faceUp = true;
+                    }
+                }
+                pacSelectedCard = null;
+            } else {
+                pacSelectedCard = null;
+            }
+            renderKlondike();
+        } else {
+            for (let i = col.length - 1; i >= 0; i--) {
+                if (col[i].faceUp) {
+                    pacSelectedCard = { source: 'tableau', colIdx, cardIdx: i, card: col[i] };
+                    renderKlondike(); break;
+                }
+            }
+        }
+    }
+
+    function clickFoundation(fIdx) {
+        if (pacSelectedCard) {
+            let movingCard = pacSelectedCard.source === 'waste' ? pacSelectedCard.card : pacTableau[pacSelectedCard.colIdx][pacSelectedCard.cardIdx];
+            let fPile = pacFoundations[fIdx];
+            let topF = fPile.length > 0 ? fPile[fPile.length - 1] : null;
+
+            let isValid = false;
+            if (!topF) {
+                if (movingCard.val === 'A') isValid = true;
+            } else {
+                if (topF.suit === movingCard.suit && cardRankOrder[movingCard.val] === cardRankOrder[topF.val] + 1) {
+                    isValid = true;
+                }
+            }
+
+            if (isValid) {
+                if (pacSelectedCard.source === 'waste') {
+                    fPile.push(pacWasteDeck.pop());
+                } else {
+                    let srcCol = pacTableau[pacSelectedCard.colIdx];
+                    if (pacSelectedCard.cardIdx === srcCol.length - 1) {
+                        fPile.push(srcCol.pop());
+                        if (srcCol.length > 0 && !srcCol[srcCol.length - 1].faceUp) {
+                            srcCol[srcCol.length - 1].faceUp = true;
+                        }
+                    }
+                }
+            }
+            pacSelectedCard = null; renderKlondike(); checkPacienciaWin();
+        }
+    }
+
+    function checkPacienciaWin() {
+        let total = pacFoundations.reduce((acc, f) => acc + f.length, 0);
+        if (total === 52) {
+            stopPacienciaTimer(); alert("✨ PARABÉNS! Você venceu a Paciência!"); showHub();
+        }
+    }
+
+    function autoCompletePaciencia() {
+        stopPacienciaTimer(); alert("✨ Paciência concluída!"); showHub();
+    }
+
+    /* BATALHA NAVAL ENGINE */
+    let navalPlayerGrid = []; let navalEnemyGrid = [];
+
+    function startNavalGame() {
+        document.getElementById('hub-screen').style.display = 'none';
+        document.getElementById('naval-setup-screen').style.display = 'none';
+        document.getElementById('naval-screen').style.display = 'flex';
+        document.getElementById('dev-panel').style.display = 'none';
+
+        initNavalGrids();
+    }
+
+    function initNavalGrids() {
+        navalPlayerGrid = Array(64).fill(0);
+        navalEnemyGrid = Array(64).fill(0);
+
+        for (let i = 0; i < 10; i++) {
+            let rP = Math.floor(Math.random() * 64);
+            let rE = Math.floor(Math.random() * 64);
+            navalPlayerGrid[rP] = 1;
+            navalEnemyGrid[rE] = 1;
+        }
+
+        renderNavalGrids();
+    }
+
+    function renderNavalGrids() {
+        const eGrid = document.getElementById('naval-enemy-grid');
+        const pGrid = document.getElementById('naval-player-grid');
+        eGrid.innerHTML = ''; pGrid.innerHTML = '';
+
+        navalEnemyGrid.forEach((val, idx) => {
+            const cell = document.createElement('div');
+            cell.className = 'naval-cell';
+            if (val === 2) { cell.classList.add('miss'); cell.innerText = '🌊'; }
+            if (val === 3) { cell.classList.add('hit'); cell.innerText = '🔥'; }
+            cell.onclick = () => shootNaval(idx);
+            eGrid.appendChild(cell);
+        });
+
+        navalPlayerGrid.forEach((val, idx) => {
+            const cell = document.createElement('div');
+            cell.className = 'naval-cell';
+            if (val === 1) cell.classList.add('ship');
+            if (val === 2) { cell.classList.add('miss'); cell.innerText = '🌊'; }
+            if (val === 3) { cell.classList.add('hit'); cell.innerText = '🔥'; }
+            pGrid.appendChild(cell);
+        });
+    }
+
+    function shootNaval(idx) {
+        if (navalEnemyGrid[idx] >= 2) return;
+        if (navalEnemyGrid[idx] === 1) navalEnemyGrid[idx] = 3;
+        else navalEnemyGrid[idx] = 2;
+
+        let cpuShot = Math.floor(Math.random() * 64);
+        if (navalPlayerGrid[cpuShot] === 1) navalPlayerGrid[cpuShot] = 3;
+        else navalPlayerGrid[cpuShot] = 2;
+
+        renderNavalGrids(); checkNavalWin();
+    }
+
+    function checkNavalWin() {
+        let enemyHits = navalEnemyGrid.filter(v => v === 3).length;
+        if (enemyHits >= 8) {
+            alert("🏆 PARABÉNS! Você destruiu a frota inimiga!");
+            showHub();
+        }
+    }
+
+    /* DEV HELPER FUNCTIONS */
+    function devAddCoins(val) { playerData.coins += val; savePlayerData(); }
+    function devAdvanceDay() {
+        if (playerData.isApto) return;
+        playerData.effectiveDaysCompleted++; playerData.todayMatchesPlayed = 0; playerData.todayAdsWatched = 0;
+        if (playerData.effectiveDaysCompleted >= 7) playerData.isApto = true;
+        savePlayerData();
+    }
+    function devToggleApto() { playerData.isApto = !playerData.isApto; savePlayerData(); }
+    function devReset() {
+        localStorage.removeItem('ff_player_data');
+        playerData = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
+        savePlayerData(); location.reload();
+    }
+</script>
+</body>
+</html>
